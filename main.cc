@@ -134,28 +134,26 @@ int fork_child(pid_t* child_id) {
 
 void signal_child(int sig) {
   LOG(INFO) << "signal child";
-  for (;;) {
-    int status = 0;
+  int status = 0;
 
-    pid_t pid = waitpid(-1, &status, WNOHANG);
-    if (pid == 0) {
-      return;
-    }
+  pid_t pid = waitpid(-1, &status, WNOHANG);
+  if (pid == 0) {
+    return;
+  }
 
-    if (pid == -1) {
-      LOG(ERROR) << "signal_child waitpid return -1";
-      return;
-    }
-    g_child_id = -1;
-    if (WIFEXITED(status)) {
-      LOG(INFO) << "master waitpid: " << WEXITSTATUS(status);
-    }
-    else if (WIFSIGNALED(status)) {
-      LOG(INFO) << "master waitpid: " << WTERMSIG(status);
-    }
-    else {
-      LOG(INFO) << "master waitpid: exit status = " << status;
-    }
+  if (pid == -1) {
+    LOG(ERROR) << "signal_child waitpid return -1: " << strerror(errno);
+    return;
+  }
+  g_child_id = -1;
+  if (WIFEXITED(status)) {
+    LOG(INFO) << "master waitpid: " << WEXITSTATUS(status);
+  }
+  else if (WIFSIGNALED(status)) {
+    LOG(INFO) << "master waitpid: " << WTERMSIG(status);
+  }
+  else {
+    LOG(INFO) << "master waitpid: exit status = " << status;
   }
 }
 void signal_terminate(int sig) {
@@ -178,14 +176,6 @@ int master_process_cycle() {
   install_signal(SIGCHLD, signal_child);
   install_signal(SIGINT, signal_terminate);
   install_signal(SIGTERM, signal_terminate);
-
-  sigset_t set;
-  sigemptyset(&set);
-  sigaddset(&set, SIGCHLD);
-  sigaddset(&set, SIGALRM);
-  sigaddset(&set, SIGINT);
-  sigaddset(&set, SIGHUP);
-  sigaddset(&set, SIGTERM);
 
   while (true) {
     int ret = pause();
