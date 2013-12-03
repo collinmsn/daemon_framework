@@ -75,7 +75,7 @@ int daemonize() {
     }
     // close 0, 1, 2
     for (int i = 0; i <= STDERR_FILENO; ++i) {
-        if (dup2(i, fd) == -1) {
+        if (dup2(fd, i) == -1) {
             LOG(ERROR) << "dup2 failed (oldfd, newfd): (" << i << ", " << fd << ")";
             return -1;
         }
